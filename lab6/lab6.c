@@ -1,6 +1,7 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<pthread.h>
+#include<unistd.h>
 
 #define NTHREADS 10
 
@@ -51,32 +52,42 @@ void SaiEscrita(){
 
 void *t1(void *arg){
     int id = *(int *)arg;
-    EntraEscrita(id);
-    x++;
-    printf("T%d: NOVO VALOR DE X= %d\n", id, x);
-    SaiEscrita();
+    while(1){
+        EntraEscrita(id);
+        x++;
+        printf("T%d: NOVO VALOR DE X= %d\n", id, x);
+        SaiEscrita();
+        sleep(1);   
+    }
     pthread_exit(NULL);
 }
 
 void *t2(void *arg){
     int id = *(int *)arg;
-    EntraLeitura(id);
-    x%2? printf("T%d %d: Impar\n",id, x):printf("T%d %d: Par\n",id, x) ;
-    SaiLeitura();
+    while(1){
+        EntraLeitura(id);
+        x%2? printf("T%d %d: Impar\n",id, x):printf("T%d %d: Par\n",id, x) ;
+        SaiLeitura();
+        sleep(1);
+    }
+
     pthread_exit(NULL);
 }
 
 void *t3(void *arg){
     int id = *(int *)arg;
-    EntraLeitura(id);
-    printf("T%d: %d\n",id, x);
-    int i =0;
-    while(i < 1000) i++;
-    SaiLeitura();
-    EntraEscrita(id);
-    x = id;
-    printf("T%d: NOVO VALOR DE X= %d\n", id, x);
-    SaiEscrita();
+    while(1){
+        EntraLeitura(id);
+        printf("T%d: %d\n",id, x);
+        int i =0;
+        while(i < 1000) i++;
+        SaiLeitura();
+        EntraEscrita(id);
+        x = id;
+        printf("T%d: NOVO VALOR DE X= %d\n", id, x);
+        SaiEscrita();
+        sleep(1);
+    }
     pthread_exit(NULL);
 }
 
