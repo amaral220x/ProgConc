@@ -3,11 +3,17 @@
 #include <pthread.h>
 #include <semaphore.h>
 
-#define NTHREADS 2
 #define N 10
+#define C 2
+#define P 2
 
 int b[N], ult = 0;
 sem_t mutexProd, mutexCons, mutexA, slotCheio, slotVazio;
+
+void dorme(void){
+    int i;
+    for(i=0; i<100000000; i++);
+}
 
 void Insere(int *item)
 {
@@ -18,11 +24,15 @@ void Insere(int *item)
     for (int i = 0; i < N; i++)
     {
         printf("%d, ", item[i]);
+        dorme();
         b[in] = item[i];
         in = (in + 1) % N;
-        sem_post(&slotCheio);
     }
     printf("]\n");
+    for(int i = 0; i < N; i++)
+    {
+        sem_post(&slotCheio);
+    }
     sem_post(&mutexProd);
 }
 
@@ -66,23 +76,36 @@ void *consumidor(void *arg)
     {
         elem = Retira();
         printf("ELEMENTO RETIRADO %d\n", elem);
+        dorme();
     }
     pthread_exit(NULL);
 }
 
 int main()
 {
-    pthread_t tid[NTHREADS];
+    pthread_t tid[P+C];
     sem_init(&mutexCons, 0, 1);
     sem_init(&slotVazio, 0, 1);
     sem_init(&slotCheio, 0, 0);
     sem_init(&mutexProd, 0, 1);
 
-    pthread_create(&tid[0], NULL, produtor, NULL);
-    pthread_create(&tid[1], NULL, consumidor, NULL);
-    // pthread_create(&tid[2], NULL, produtor, NULL);
-    // pthread_create(&tid[3], NULL, consumidor, NULL);
-    for (int t = 0; t < NTHREADS; t++)
+    for (int i = 0; i < P; i++)
+    {
+        if (pthread_create(&tid[i], NULL, produtor, NULL))
+        {
+            printf("ERRO: pthread_create()\n");
+            exit(1);
+        }
+    }
+    for (int i = C; i < P + C; i++)
+    {
+        if (pthread_create(&tid[i], NULL, consumidor, NULL))
+        {
+            printf("ERRO: pthread_create()\n");
+            exit(1);
+        }
+    }
+    for (int t = 0; t < P+C; t++)
     {
         if (pthread_join(tid[t], NULL))
         {
